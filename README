@@ -18,7 +18,8 @@
  
  2. Create your reference strings in /messages.js (see /messages.js for more details)
  
- 3. Copy and paste this file once in to your Popup or Injected Script target files.
+ 3. Copy and paste the /snippet.js file once in to your Popup or Injected Script target 
+    files.
  
  4. In this file, then load either ALL localized versions of your reference strings 
     from messages.js...
@@ -69,7 +70,8 @@
  
  		<script type="text/javascript" src="translate.js"></script>
  
- 2. Copy and paste this file once in to your Popup or Injected Script target files.
+ 2. Copy and paste the /snippet.js file once in to your Popup or Injected Script target 
+    files.
  
  3. Perform on-demand translation/localization with the following code:
  
