@@ -13,14 +13,17 @@
  * 
  */
 
-// todo: write translate library with:
+// currently not working:
 //
-// - caching of translations w/ localStorage (or widget.preferences? more storage??).
+// - caching of translations w/ localStorage
 //
 
 !function( undefined ){
 	
-	var userLanguage = window.navigator.language || 'en';
+	var userLanguage = window.navigator.language || 'en',
+		storage = localStorage;
+	
+	if(!storage[ userLanguage ]) storage[ userLanguage ] = {};
 
 	var xhrManager = ( function() {
 	    var pool = [];
@@ -80,6 +83,20 @@
 	        packets.push( packet );
 	    }
 	    return packets;
+	}
+	
+	// Before we analyze check if we already have the translations
+	function getCached ( data ) {
+		var cached = [];
+		for(var i in data) {
+			var item = storage.getItem(encodeURIComponent(userLanguage + "_" + i));
+			if(item) {
+				cached[i] = item;
+				opera.postError('XX ' + item["message"] + " " + item.message);
+			}
+		}
+		
+		return (cached.length > 0 ? (cache.length === data.length ? cached : null) : null);
 	}
 	  
 	function analyze ( strings, callback ) {
@@ -169,33 +186,35 @@
 		},
 		loadLocaleData: function( data, source ) {
 			var id = data.id,
-				messages = [],
+				messages = opera.extension.messages || [],
+				cached = getCached( messages ),
 				strings = [];
 			
-			if(!opera.extension.messages ||
-					opera.extension.messages.length === 0) {
+			if( cached ) {
+				opera.postError('Received from cache!');
+				source.postMessage({
+					action: 'dataLocalized',
+					"language": userLanguage,
+					"data": cached
+				});
+				return;
+			}
+			
+			if( messages.length === 0 ) {
 				fail( source, id, [] );
 				return;
 			}
 			
-			for(var i in opera.extension.messages) {
-				if(data.scope) {
-					if(opera.extension.messages[i]["scope"] === data.scope) {
-						messages[i] = opera.extension.messages[i];
-						strings[i] = messages[i]["message"];
-					}
-				} else {
-					messages[i] = opera.extension.messages[i];
-					strings[i] = messages[i]["message"];
-				}
-			}
+			for(var i in messages)
+				strings[i] = messages[i]["message"];
 			
 			analyze( strings, function( language ) {
 				if( language ) {
 					translate( language, strings, function( translatedStringData ) {
-						for(var i in translatedStringData)
+						for(var i in translatedStringData) {
 							messages[i]["message"] = translatedStringData[i];
-						
+							storage.setItem(encodeURIComponent(userLanguage + "_" + i), messages[i]);
+						}
 						source.postMessage({
 							action: 'dataLocalized',
 							"language": language,
@@ -210,7 +229,19 @@
 		localizeData: function( data, source ) {
 			var id = data.id,
 				messages = data.messages || [],
+				cached = getCached( messages ),
 				strings = [];
+			
+			if( cached ) {
+				opera.postError('Received from cache!');
+				source.postMessage({
+					action: 'dataLocalized',
+					"id": id,
+					"language": userLanguage,
+					"data": cached
+				});
+				return;
+			}
 			
 			if(messages.length === 0) {
 				fail( source, id, {} );
@@ -224,9 +255,10 @@
 			analyze( strings, function( language ) {
 				if( language ) {
 					translate( language, strings, function( translatedStringData ) {
-						for(var i in translatedStringData)
+						for(var i in translatedStringData) {
 							messages[i]["message"] = translatedStringData[i];
-						
+							storage.setItem(encodeURIComponent(userLanguage + "_" + i), messages[i]);
+						}
 						source.postMessage({
 							action: 'dataLocalized',
 							"id": id,

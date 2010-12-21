@@ -7,8 +7,9 @@
 // output -> open with Ctrl+Shift+O on Windows/*nix (or Cmd+Shift+O on Mac).
 
 /**
- * OEX Auto Localization Library.
- * See /snippet.js for full instructions and details.
+ * ---------------------------------------
+ * OEX Auto Localization Library Snippet
+ * ---------------------------------------
  */
 !function( undefined ) {
 	var oex = opera.extension;
@@ -49,11 +50,7 @@
 		};
 		var _r = function( callback ) {
 			var cb = (callback && typeof callback == 'function') ? callback : function() {};
-			if(initialized) {
-				callback( lang );
-			} else {
-				readyTransactions.push( cb );
-			}
+			initialized ? callback( lang ) : readyTransactions.push( cb );
 		};
 		oex.messages = _m;
 		oex.addEventListener('message', _om, false);
@@ -68,15 +65,15 @@
 }();
 
 
-/** 
- * Initialization script for getting the localized messages for the 'injectedMessages' scope.
- */ 
-opera.extension.i18n.ready( function() {
-	opera.postError('opera.extensions.i18n ready!');
-	
+// AUTO-LOCALIZATION TEST
+opera.extension.i18n.ready( function( userLanguage ) {
+	opera.postError('opera.extensions.i18n converted messages to lang[' + userLanguage + ']');
+
 	for(var i in opera.extension.messages) {
 		opera.postError( "[" + i + "] " + opera.extension.messages[i]["message"] );
 	}
+	
+	opera.postError('To see different results, change your browser locale in Opera > Preferences > Language');
 });
 
 
