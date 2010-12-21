@@ -54,7 +54,7 @@
 			if( !_m[ id ]) return id;
 			var s = _m[ id ][ "message" ];
 			if(replacements)
-				for(var i in replacements) s = s.replace(replacements[i], '<string/>');
+				for(var i in replacements) s = s.replace('<string/>', replacements[i] );
 			return s;
 		};
 		oex.messages = _m;
@@ -81,6 +81,11 @@ opera.extension.i18n.ready( function( userLanguage ) {
 		// the above line is also equivalent to:
 		//opera.postError( "I18N - InjectedJS: [" + i + "] " + opera.extension.messages[i]["message"] );
 	}
+	
+	// Example of dynamic string replacement at runtime:
+	 opera.postError( "I18N - InjectedJS: [sign_in_required_message] " + 
+			 opera.extension.i18n.getMessage( 'sign_in_required_message', [ opera.extension.i18n.getMessage( 'sign_in_message' ) ] )
+	 );
 	
 	opera.postError('I18N - InjectedJS: To see different results, change your browser locale in Opera > Preferences > Language');
 });

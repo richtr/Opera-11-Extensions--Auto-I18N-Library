@@ -19,7 +19,7 @@
 //
 !function( undefined ) {
 	
-	//var userLanguage = 'ru', // for testing
+	//var userLanguage = 'pl', // for testing
 	var userLanguage = window.navigator.language,
 		storage = localStorage;
 	
@@ -379,7 +379,7 @@
 			if( !oex.messages[ id ]) return id;
 			var s = oex.messages[ id ][ "message" ];
 			if(replacements)
-				for(var i in replacements) s = s.replace(replacements[i], '<string/>');
+				for(var i in replacements) s = s.replace('<string/>', replacements[i] );
 			return s;
 		};
 		actions[ 'quickLoad' ]( {}, null, _loadedCB );

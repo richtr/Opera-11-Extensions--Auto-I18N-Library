@@ -54,7 +54,7 @@
 	
 		opera.extension.i18n.getMessage('somemessage', [ "string1", "string2" ]);
 		opera.extension.i18n.getMessage('sign_in_required_message', [ 
-			opera.extension.i18n.getMessage['sign_in] 
+			opera.extension.i18n.getMessage['sign_in_message'] 
 		]);
 		// etc...
 		
@@ -116,7 +116,7 @@
 	
 		opera.extension.i18n.getMessage('somemessage', [ "string1", "string2" ]);
 		opera.extension.i18n.getMessage('sign_in_required_message', [ 
-			opera.extension.i18n.getMessage['sign_in] 
+			opera.extension.i18n.getMessage['sign_in_message'] 
 		]);
 		// etc...
     
