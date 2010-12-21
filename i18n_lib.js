@@ -19,8 +19,8 @@
 //
 !function( undefined ) {
 	
-	var userLanguage = 'ru', // for testing
-	//var userLanguage = window.navigator.language,
+	//var userLanguage = 'ru', // for testing
+	var userLanguage = window.navigator.language,
 		storage = localStorage;
 	
 	if(!storage[ userLanguage ]) storage[ userLanguage ] = {};
