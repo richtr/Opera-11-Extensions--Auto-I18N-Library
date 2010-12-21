@@ -19,7 +19,8 @@
 //
 !function( undefined ) {
 	
-	var userLanguage = 'es',
+	var userLanguage = 'ru', // for testing
+	//var userLanguage = window.navigator.language,
 		storage = localStorage;
 	
 	if(!storage[ userLanguage ]) storage[ userLanguage ] = {};
@@ -39,12 +40,11 @@
 	
 	function getAnalysisUrl ( strings ) {
 	    var url = 'https://ajax.googleapis.com/ajax/services/language/detect?v=1.0&q='
-	    	text = '',
-	    	s = [];
+	    	text = '';
 	    
 	    for(var i in strings) {
 	    	if(text !== '') text += ' ';
-	    	text += strings[s];
+	    	text += strings[i];
 	    }
 	    text = encodeURIComponent( text );
 	    if ( text.length > 1300 ) {
@@ -55,23 +55,25 @@
 	}
 	
 	function getTranslatePackets ( fromLanguage, strings ) {
-		opera.postError('pushing packets');
 	    var packets = [],
-	        i = 0
-	        s = [];
+	        i = 0,
+	        s = [],
+	        l = 0;
 	    
-	    var l = 0;
-	    for(var i in strings) l++;
+	    for(var x in strings) {
+	    	s[l] = strings[x];
+	    	l++;
+	    }
 	    
-	    //while ( i < l ) {
+	    while ( i < l ) {
 	    	// Set destination language
 	        var packet = 'v=1.0&langpair=' + fromLanguage + '%7C' + userLanguage;
 	        var len = packet.length;
 
-	        for(var i in strings) {
-	       /* for ( var segments = 0;
-	                i < l && segments < 100; i += 1, segments += 1 ) {*/
-	            var next = encodeURIComponent( strings[i] ),
+	        //for(var i in strings) {
+	        for ( var segments = 0;
+	                i < l && segments < 100; i += 1, segments += 1 ) {
+	            var next = encodeURIComponent( s[i] ),
 	                nextLen = next.length;
 	            // If the text is too long, abort.
 	            if ( nextLen > 4900 ) {
@@ -86,16 +88,16 @@
 	            len += nextLen;
 	        }
 	        packets.push( packet );
-	    //}
+	    }
 	    return packets;
 	}
 	
 	// Before we analyze check if we already have the translations
-	function getCached ( strings ) {
+	function getCached ( messages ) {
 		var cached = [],
 			isCached = true;
-		for(var i in strings) {
-			var item = storage.getItem(encodeURIComponent("autolang_" + userLanguage + "_" + strings[i]));
+		for(var i in messages) {
+			var item = storage.getItem(encodeURIComponent("autolang_" + userLanguage + "_" + i));
 			if(item) {
 				cached[i] = item;
 			} else {
@@ -152,7 +154,6 @@
 	        xhr.setRequestHeader( 'Content-type', 
 	            'application/x-www-form-urlencoded' );
 	        xhr.send( packets[i] );
-	        opera.postError('translation request sent: ' + packets[i]);
 	    }
 	    
 	    xhr.onreadystatechange = function () {
@@ -175,8 +176,6 @@
 	            if ( i < l ) {
 	                send();
 	            } else {
-	            	for(var j in translatedStringData)
-	                	storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + strings[j]), translatedStringData[j]);
 	                callback( translatedStringData );
 	                xhrManager.release( xhr );
 	            }
@@ -217,23 +216,25 @@
 		loadLocaleData: function( data, source, callback ) {
 			var id = data.id,
 				messages = opera.extension.messages || [],
-				strings = {};
+				strings = [];
 			
 			if( messages.length <= 0 ) {
 				fail( source || callback, id, [] );
 				return;
 			}
 			
-			for(var i in messages) 
-				strings.i = messages[i]["message"];
+			var l = 0;
+			for(var i in messages) { 
+				strings[l] = messages[i]["message"];
+				l++;
+			}
 
-			var cached = getCached( strings );
+			var cached = getCached( messages );
 			
 			if( cached ) {
-				for(var i in cached)
-					messages[i]["message"] = cached[i];
+				for(var i in messages)
+					messages[i]["message"] = cached[i] || messages[i]["message"];
 				
-				opera.postError('Received from cache!');
 				if( source ) {
 					source.postMessage({
 						action: 'dataLocalized',
@@ -241,7 +242,7 @@
 						"data": messages
 					});
 				} else if (callback) {
-					callback( userLanguage, opera.extension.messages );
+					callback( userLanguage, messages );
 				}
 				return;
 			}
@@ -249,9 +250,11 @@
 			analyze( strings, function( language ) {
 				if( language ) {
 					translate( language, strings, function( translatedStringData ) {
-						for(var i in translatedStringData)
-							if(messages[i])
-								messages[i]["message"] = translatedStringData[i];
+						var count = 0;
+						for(var i in messages) {
+							messages[i]["message"] = translatedStringData[ count ];
+		                	storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), translatedStringData[ count++ ]);
+						}
 						if( source ) {
 							source.postMessage({
 								action: 'dataLocalized',
@@ -270,23 +273,25 @@
 		localizeData: function( data, source, callback ) {
 			var id = data.id,
 				messages = data.messages || null,
-				strings = {};
+				strings = [];
 			
 			if( !messages ) {
 				fail( source || callback, id, {} );
 				return;
 			}
 			
-			for(var i in messages)
-				strings.i = messages[i]["message"];
+			var l = 0;
+			for(var i in messages) { 
+				strings[l] = messages[i]["message"];
+				l++;
+			}
 			
-			var cached = getCached( strings );
+			var cached = getCached( messages );
 			
 			if( cached ) {
-				for(var i in cached)
-					messages[i]["message"] = cached[i];
+				for(var i in messages)
+					messages[i]["message"] = cached[i] || messages[i]["message"];
 				
-				opera.postError('Received from cache!');
 				if( source ) {
 					source.postMessage({
 						action: 'dataLocalized',
@@ -303,8 +308,11 @@
 			analyze( strings, function( language ) {
 				if( language ) {
 					translate( language, strings, function( translatedStringData ) {
-						for(var i in translatedStringData)
-							messages[i]["message"] = translatedStringData[i];
+						var count = 0;
+						for(var i in messages) {
+							messages[i]["message"] = translatedStringData[ count ];
+							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), translatedStringData[ count++ ]);
+						}
 						if( source ) {
 							source.postMessage({
 								action: 'dataLocalized',
