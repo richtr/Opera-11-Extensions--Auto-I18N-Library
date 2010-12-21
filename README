@@ -52,11 +52,11 @@
 		
 	You can also replace <string/> placeholders in your messages at runtime as follows:
 	
-		opera.extension.i18n.getMessage('somemessage', [ "string1", "string2" ]);
-		opera.extension.i18n.getMessage('sign_in_required_message', [ 
-			opera.extension.i18n.getMessage['sign_in_message'] 
-		]);
-		// etc...
+    	opera.extension.i18n.getMessage('somemessage', [ "string1", "string2" ]);
+    	opera.extension.i18n.getMessage('sign_in_required_message', [ 
+    	    opera.extension.i18n.getMessage['sign_in_message'] 
+    	]);
+    	// etc...
 		
  
  That's all you need for complete auto-localization of your extension.
@@ -114,11 +114,11 @@
     	
     You can also replace <string/> placeholders in your messages at runtime as follows:
 	
-		opera.extension.i18n.getMessage('somemessage', [ "string1", "string2" ]);
-		opera.extension.i18n.getMessage('sign_in_required_message', [ 
-			opera.extension.i18n.getMessage['sign_in_message'] 
-		]);
-		// etc...
+    	opera.extension.i18n.getMessage('somemessage', [ "string1", "string2" ]);
+    	opera.extension.i18n.getMessage('sign_in_required_message', [ 
+    	    opera.extension.i18n.getMessage['sign_in_message'] 
+    	]);
+    	// etc...
     
     
 ** NOTE******************************************************************************
