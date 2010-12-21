@@ -39,11 +39,12 @@
 	
 	function getAnalysisUrl ( strings ) {
 	    var url = 'https://ajax.googleapis.com/ajax/services/language/detect?v=1.0&q='
-	    	text = '';
+	    	text = '',
+	    	s = [];
 	    
 	    for(var i in strings) {
 	    	if(text !== '') text += ' ';
-	    	text += strings[i];
+	    	text += strings[s];
 	    }
 	    text = encodeURIComponent( text );
 	    if ( text.length > 1300 ) {
@@ -56,19 +57,20 @@
 	function getTranslatePackets ( fromLanguage, strings ) {
 		opera.postError('pushing packets');
 	    var packets = [],
-	        i = 0,
-	        l = strings.length;
+	        i = 0
+	        s = [];
 	    
-	    opera.postError("Strings: " + strings);
+	    var l = 0;
+	    for(var i in strings) l++;
 	    
-	    while ( i < l ) {
-	    	opera.postError('in loop');
+	    //while ( i < l ) {
 	    	// Set destination language
 	        var packet = 'v=1.0&langpair=' + fromLanguage + '%7C' + userLanguage;
 	        var len = packet.length;
 
-	        for ( var segments = 0;
-	                i < l && segments < 100; i += 1, segments += 1 ) {
+	        for(var i in strings) {
+	       /* for ( var segments = 0;
+	                i < l && segments < 100; i += 1, segments += 1 ) {*/
 	            var next = encodeURIComponent( strings[i] ),
 	                nextLen = next.length;
 	            // If the text is too long, abort.
@@ -84,7 +86,7 @@
 	            len += nextLen;
 	        }
 	        packets.push( packet );
-	    }
+	    //}
 	    return packets;
 	}
 	
@@ -215,16 +217,16 @@
 		loadLocaleData: function( data, source, callback ) {
 			var id = data.id,
 				messages = opera.extension.messages || [],
-				strings = [];
+				strings = {};
 			
-			if( messages.length === 0 ) {
+			if( messages.length <= 0 ) {
 				fail( source || callback, id, [] );
 				return;
 			}
 			
-			for(var i in messages)
-				strings[i] = messages[i]["message"];
-			
+			for(var i in messages) 
+				strings.i = messages[i]["message"];
+
 			var cached = getCached( strings );
 			
 			if( cached ) {
@@ -248,7 +250,8 @@
 				if( language ) {
 					translate( language, strings, function( translatedStringData ) {
 						for(var i in translatedStringData)
-							messages[i]["message"] = translatedStringData[i];
+							if(messages[i])
+								messages[i]["message"] = translatedStringData[i];
 						if( source ) {
 							source.postMessage({
 								action: 'dataLocalized',
@@ -266,17 +269,16 @@
 		},
 		localizeData: function( data, source, callback ) {
 			var id = data.id,
-				messages = data.messages || [],
-				strings = [];
+				messages = data.messages || null,
+				strings = {};
 			
-			if(messages.length === 0) {
+			if( !messages ) {
 				fail( source || callback, id, {} );
 				return;
 			}
 			
-			for(var i in messages) {
-				strings[i] = messages[i]["message"];
-			}
+			for(var i in messages)
+				strings.i = messages[i]["message"];
 			
 			var cached = getCached( strings );
 			
