@@ -15,18 +15,10 @@
 
 // todo: write translate library with:
 //
-//	- background process message listeners for:
-//		'localizeData' & 'loadLocaleData'
-//
-// - postMessage for:
-// 		'dataLocalized' & 'localeDataLoaded'
-//
 // - caching of translations w/ localStorage (or widget.preferences? more storage??).
 //
-// - Google Translate API AJAX
-//
 
-!function(w, undefined){
+!function( undefined ){
 	
 	var userLanguage = window.navigator.language || 'en';
 
@@ -43,10 +35,15 @@
 	    };
 	}() );
 	
-	function getAnalysisUrl ( text ) {
-	    var url = 'https://ajax.googleapis.com/ajax/services/language/detect?v=1.0&q=';
+	function getAnalysisUrl ( strings ) {
+	    var url = 'https://ajax.googleapis.com/ajax/services/language/detect?v=1.0&q='
+	    	text = '';
+	    
+	    for(var i in strings) {
+	    	if(text !== '') text += ' ';
+	    	text += strings[i];
+	    }
 	    text = encodeURIComponent( text );
-	    opera.postError(text);
 	    if ( text.length > 1300 ) {
 	    	text = text.slice( 0, text.lastIndexOf( '%', 1300 ) );
 	    }
@@ -85,24 +82,17 @@
 	    return packets;
 	}
 	  
-	var analyze = function( strings, callback ) {
-		
+	function analyze ( strings, callback ) {
         var xhr = xhrManager.get();
         xhr.open( 'GET', getAnalysisUrl( strings ), true );
-        opera.postError(getAnalysisUrl( strings ));
         xhr.onreadystatechange = function () {
-            if ( xhr.readyState < 4 ) {
-            	opera.postError('failed without trying :(');
-            	callback.call( this ); // no parameter indicates an error
-            	return;
-            }
+            if ( xhr.readyState < 4 ) return;
             var result = JSON.parse( xhr.responseText ),
                 data = result.responseData;
             if ( ( xhr.status >= 200 && xhr.status < 300 ) &&
                     ( result.responseStatus === 200 ) ) {
                 callback.call( this, data.language );
             } else {
-            	opera.postError('failed after trying :(');
             	callback.call( this ); // no parameter indicates an error
             }
             xhrManager.release( xhr );
@@ -110,7 +100,7 @@
         xhr.send();		
 	}
 	
-	var translate = function( fromLanguage, strings, callback ) {
+	function translate ( fromLanguage, strings, callback ) {
 		if( fromLanguage === userLanguage ) {
 			callback.call( this, strings );
 			return;
@@ -171,92 +161,92 @@
 	}
 	
 	var actions = {
-		localizeData: function( data, source ) {
-			var id = data.id;
-			
-			analyze( data.strings, function( language ) {
-				if( language ) {
-					translate( language, data.strings, function( translatedStringData ) {
-						source.postMessage({
-							action: 'dataLocalized',
-							"id": id,
-							"language": language,
-							"data": translatedStringData
-						});
-					});
-				} else {
-					fail( source, id, data.strings );
-				}
+		quickLoad: function( data, source ) {
+			source.postMessage({
+				action: 'dataLocalized',
+				"data": opera.extension.messages || []
 			});
 		},
 		loadLocaleData: function( data, source ) {
 			var id = data.id,
-				msgs = [],
+				messages = [],
 				strings = [];
 			
 			if(!opera.extension.messages ||
 					opera.extension.messages.length === 0) {
-				fail( source, id, {} );
+				fail( source, id, [] );
 				return;
 			}
 			
-			/*
-			 for(var i in opera.extension.messages) {
-				for(var j in opera.extension.messages[i]) {
-					opera.postError(opera.extension.messages[i][j]);
+			for(var i in opera.extension.messages) {
+				if(data.scope) {
+					if(opera.extension.messages[i]["scope"] === data.scope) {
+						messages[i] = opera.extension.messages[i];
+						strings[i] = messages[i]["message"];
+					}
+				} else {
+					messages[i] = opera.extension.messages[i];
+					strings[i] = messages[i]["message"];
 				}
-				strings[i] = opera.extension.messages[i].message;
-			 }
-			 */
-			
-			Array.prototype.push.apply( msgs, [ opera.extension.messages ].map(
-                    function( item ) {
-                    	if(data.scope) {
-                    		if(item.scope === data.scope)
-    							return item;
-    					}
-    					return item;
-                    }
-			) );
-			
-			if( msgs.length > 0 ) {
-				for(var i in msgs) {
-					strings[i] = msgs[i]['message'];
-				}
-			} else {
-				opera.postError('stupid fail :(');
-				fail( source, id, {} );
-				return;
 			}
-			opera.postError('message received2');
-			opera.postError(strings[0] + " / " + strings.length);
 			
 			analyze( strings, function( language ) {
 				if( language ) {
 					translate( language, strings, function( translatedStringData ) {
 						for(var i in translatedStringData)
-							msgs[i].message = translatedStringData[i];
-							
+							messages[i]["message"] = translatedStringData[i];
+						
+						source.postMessage({
+							action: 'dataLocalized',
+							"language": language,
+							"data": messages
+						});
+					});
+				} else {
+					fail( source, id, messages );
+				}
+			});
+		},
+		localizeData: function( data, source ) {
+			var id = data.id,
+				messages = data.messages || [],
+				strings = [];
+			
+			if(messages.length === 0) {
+				fail( source, id, {} );
+				return;
+			}
+			
+			for(var i in messages) {
+				strings[i] = messages[i]["message"];
+			}
+			
+			analyze( strings, function( language ) {
+				if( language ) {
+					translate( language, strings, function( translatedStringData ) {
+						for(var i in translatedStringData)
+							messages[i]["message"] = translatedStringData[i];
+						
 						source.postMessage({
 							action: 'dataLocalized',
 							"id": id,
 							"language": language,
-							"data": msgs
+							"data": messages
 						});
 					});
 				} else {
-					fail( source, id, msgs );
+					fail( source, id, messages );
 				}
 			});
 		}
 	};
 	
-	if( opera && opera.extension ) {
-		opera.extension.addEventListener( 'message', function( msg ) {
-			if( msg.data.action !== 'localizeData' && msg.data.action !== 'loadLocaleData' )
-				return;
-			actions[ msg.data.action ]( msg.data, msg.source );
-		}, false);
-	}
+	opera.extension.addEventListener( 'message', function( msg ) {
+		if( msg.data.action !== 'quickLoad' && 
+				msg.data.action !== 'localizeData' && 
+					msg.data.action !== 'loadLocaleData' )
+			return;
+		actions[ msg.data.action ]( msg.data, msg.source );
+	}, false);
 
-}(window);
+}();

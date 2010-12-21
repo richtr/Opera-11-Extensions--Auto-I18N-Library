@@ -17,14 +17,15 @@
  */
 !function( undefined ) {
 	var i18nObj = function() {
-		var _m = [];
-		var localizeTransactions = [];
-		function _om (msg) {
-			var d = (msg.data && msg.data.data) ? msg.data.data : {}, 
+		var _m = [],
+			localizeTransactions = [],
+			initialized = false
+		function _om ( msg ) {
+			var d = msg.data, 
 				s = [];
 			if(!d || d.action!=='dataLocalized') return;
 			for(var j in d.data) 
-				s[j] = _messagesVariable[j] = d.data[j];
+				s[j] = _m[j] = d.data[j];
 			localizeTransactions[ d.id ]( d.language, s );
 		}
 		var _ll = function( scope, callback ) {
@@ -33,8 +34,10 @@
 				oex = opera.extension,
 				cb = (callback && typeof callback == 'function') ? callback : function() {};
 			localizeTransactions[x] = cb;
-			if(localizeTransactions.length===1) 
+			if(!initialized) {
 				oex.addEventListener('message', _om, false);
+				initialized = true;
+			}
 			oex.postMessage({ "action": 'loadLocaleData', "id": x, "scope": scope });
 		};
 		var _l = function( stringData, callback ) {
@@ -47,12 +50,14 @@
 				oex = opera.extension,
 				cb = (callback && typeof callback == 'function') ? callback : function() {};
 			localizeTransactions[x] = cb;
-			if(localizeTransactions.length===1) 
+			if(!initialized) {
 				oex.addEventListener('message', _om, false);
-			oex.postMessage({ "action": 'localizeData', "id": x, "strings": stringData });
+				initialized = true;
+			}
+			oex.postMessage({ "action": 'localizeData', "id": x, "messages": stringData });
 		};
+		opera.extension.messages = _m;
 		return {
-			get messages() { return _m; },
 			get loadLocale() { return _ll; },
 			get localize() { return _l; }
 		};
