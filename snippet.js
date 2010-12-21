@@ -50,8 +50,12 @@
 			var cb = (callback && typeof callback == 'function') ? callback : function() {};
 			initialized ? callback( lang ) : readyTransactions.push( cb );
 		};
-		var _gm = function( id ) {
-			return _m[ id ] ? _m[ id ][ "message" ] : id;
+		var _gm = function( id, replacements ) {
+			if( !_m[ id ]) return id;
+			var s = _m[ id ][ "message" ];
+			if(replacements)
+				for(var i in replacements) s = s.replace(replacements[i], '<string/>');
+			return s;
 		};
 		oex.messages = _m;
 		oex.addEventListener('message', _om, false);

@@ -375,8 +375,12 @@
 			var cb = (callback && typeof callback == 'function') ? callback : function() {};
 			initialized ? callback( lang ) : readyTransactions.push( cb );
 		};
-		var _gm = function( id ) {
-			return oex.messages[ id ] ? oex.messages[ id ][ "message" ] : id;
+		var _gm = function( id, replacements ) {
+			if( !oex.messages[ id ]) return id;
+			var s = oex.messages[ id ][ "message" ];
+			if(replacements)
+				for(var i in replacements) s = s.replace(replacements[i], '<string/>');
+			return s;
 		};
 		actions[ 'quickLoad' ]( {}, null, _loadedCB );
 		return {

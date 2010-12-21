@@ -26,5 +26,22 @@ opera.extension.i18n.ready( function( userLanguage ) {
 
 </script>
 
+<script type="text/javascript">
+
+// Add an example popup button
+
+var UIItemProperties = { // options for the button
+   disabled: false,
+   title: "Your Extension Name",
+   popup: {
+      href: 'popup.html',
+      width: "320px",
+      height: "60px"
+   }
+}
+var operaBtn = opera.contexts.toolbar.createItem( UIItemProperties ); // create the button
+opera.contexts.toolbar.addItem( operaBtn ); // add button to UI
+</script>
+
 </body>
 </html>

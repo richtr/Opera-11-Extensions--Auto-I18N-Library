@@ -25,7 +25,9 @@
  
  		<access origin="https://ajax.googleapis.com"/>
  
- 2. Create your reference strings in /messages.js in the language of your choice.
+ 2. Create your reference strings in /messages.js in the language of your choice. You can add 
+    placeholders as <string/> in to which you can dynamically inject content at runtime as 
+    required (see examples below).
  
  Instructions for then using this library within your background process, popup process or 
  injected script processes are included below.  
@@ -44,9 +46,18 @@
  
  3. Access your localized messages by their *id* as follows within Javascript:
  
- 		opera.extension.i18n.getMessage['welcomeMessage'];
- 		opera.extension.i18n.getMessage['helpButtonString'];
+ 		opera.extension.i18n.getMessage('welcomeMessage');
+ 		opera.extension.i18n.getMessage('helpButtonString');
 		// etc...
+		
+	You can also replace <string/> placeholders in your messages at runtime as follows:
+	
+		opera.extension.i18n.getMessage('somemessage', [ "string1", "string2" ]);
+		opera.extension.i18n.getMessage('sign_in_required_message', [ 
+			opera.extension.i18n.getMessage['sign_in] 
+		]);
+		// etc...
+		
  
  That's all you need for complete auto-localization of your extension.
  
@@ -97,9 +108,17 @@
  	
  	Alternatively use the standard I18N methods to obtain the translated messages:
     
-    	opera.extension.i18n.getMessage['mystring1'];
-    	opera.extension.i18n.getMessage['somestring'];
+    	opera.extension.i18n.getMessage('mystring1');
+    	opera.extension.i18n.getMessage('somestring');
     	// ...etc...
+    	
+    You can also replace <string/> placeholders in your messages at runtime as follows:
+	
+		opera.extension.i18n.getMessage('somemessage', [ "string1", "string2" ]);
+		opera.extension.i18n.getMessage('sign_in_required_message', [ 
+			opera.extension.i18n.getMessage['sign_in] 
+		]);
+		// etc...
     
     
 ** NOTE******************************************************************************
