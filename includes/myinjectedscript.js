@@ -11,7 +11,7 @@
  * OEX Auto Localization Library Snippet
  * ---------------------------------------
  * 
- * http://my.opera.com/richtr/internationalization_library_for_opera_extensions
+ * http://my.opera.com/richtr/blog/experimental-auto-internationalization-i18n-library-for-opera-11-extension-dev
  */
 !function( undefined ) {
 	var oex = opera.extension;

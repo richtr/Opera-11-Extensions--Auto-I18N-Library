@@ -11,7 +11,9 @@
  * You MUST include the contents of this file (the snippet) in to your Popup or Injected Script 
  * file(s).
  * 
- * See the README file for full instructions.
+ * See the README file for full instructions or visit the support page:
+ * 
+ * http://my.opera.com/richtr/blog/experimental-auto-internationalization-i18n-library-for-opera-11-extension-dev
  */
 !function( undefined ) {
 	var oex = opera.extension;

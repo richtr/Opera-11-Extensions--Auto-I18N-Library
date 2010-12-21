@@ -9,14 +9,11 @@
  * All translations are cached to speed up localization delivery and prevent unnecessary 
  * translation lookups.
  * 
- * For full usage instructions please consult the README file.
+ * For full usage instructions please consult the README file or visit the support page:
+ * 
+ * http://my.opera.com/richtr/blog/experimental-auto-internationalization-i18n-library-for-opera-11-extension-dev
  * 
  */
-
-// currently not working:
-//
-// - caching of translations w/ localStorage
-//
 !function( undefined ) {
 	
 	//var userLanguage = 'pl', // for testing
