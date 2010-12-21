@@ -10,6 +10,8 @@
  * ---------------------------------------
  * OEX Auto Localization Library Snippet
  * ---------------------------------------
+ * 
+ * http://my.opera.com/richtr/internationalization_library_for_opera_extensions
  */
 !function( undefined ) {
 	var oex = opera.extension;
@@ -25,16 +27,12 @@
 			if(!d || d.action!=='dataLocalized') return;
 			for(var j in d.data) s[j] = _m[j] = d.data[j];
 			if(d.id) localizeTransactions[ d.id ]( d.language, s );
-			if(!initialized){ // after 'quickLoad'
-				if(d.language) {
-					initialized = true;
-					lang = d.language;
-					for(var i = 0, l = readyTransactions.length; i < l; i++) {
-						readyTransactions[ i ]( lang );
-						readyTransactions = readyTransactions.splice(i, 1);
-					}
-				} else {
-					oex.postMessage({ "action": 'loadLocaleData' });
+			if(!initialized) {
+				initialized = true;
+				lang = d.language;
+				for(var i = 0, l = readyTransactions.length; i < l; i++) {
+					readyTransactions[ i ]( lang );
+					readyTransactions = readyTransactions.splice(i, 1);
 				}
 			}
 		}
@@ -52,28 +50,35 @@
 			var cb = (callback && typeof callback == 'function') ? callback : function() {};
 			initialized ? callback( lang ) : readyTransactions.push( cb );
 		};
+		var _gm = function( id ) {
+			return _m[ id ] ? _m[ id ][ "message" ] : id;
+		};
 		oex.messages = _m;
 		oex.addEventListener('message', _om, false);
 		oex.postMessage({ "action": 'quickLoad' }); 
 		return {
-			get ready() { return _r; },
-			get localize() { return _l; },
-			get messages() { return _m; }
+			get ready() { return _r; }, 	 // parameters: (callback_function)
+			get localize() { return _l; },   // parameters: (strings, callback_function)
+			get getMessage() { return _gm; } // parameters: (message_id)
 		};
 	};
-	oex.i18n = new i18nObj();
+	if(!oex.i18n) oex.i18n = new i18nObj();
 }();
 
 
-// AUTO-LOCALIZATION TEST
+//
+// AUTO-LOCALIZATION DEMO...
+//
 opera.extension.i18n.ready( function( userLanguage ) {
-	opera.postError('opera.extensions.i18n converted messages to lang[' + userLanguage + ']');
+	opera.postError('I18N - InjectedJS: opera.extensions.i18n converted messages to lang[' + userLanguage + ']');
 
 	for(var i in opera.extension.messages) {
-		opera.postError( "[" + i + "] " + opera.extension.messages[i]["message"] );
+		opera.postError( "I18N - InjectedJS: [" + i + "] " + opera.extension.i18n.getMessage( i ) );
+		// the above line is also equivalent to:
+		//opera.postError( "I18N - InjectedJS: [" + i + "] " + opera.extension.messages[i]["message"] );
 	}
 	
-	opera.postError('To see different results, change your browser locale in Opera > Preferences > Language');
+	opera.postError('I18N - InjectedJS: To see different results, change your browser locale in Opera > Preferences > Language');
 });
 
 

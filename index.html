@@ -1,7 +1,30 @@
 <html>
 <head>
+   <!-- DO NOT MODIFY THE FOLLOWING LINES -->
    <script type="text/javascript" src="messages.js"></script>
-   <script type="text/javascript" src="translate.js"></script>
+   <script type="text/javascript" src="i18n_lib.js"></script>
+   <!-- YOUR SCRIPTS HERE -->
 </head>
-<body></body>
+<body>
+
+<script type="text/javascript">
+
+//
+//AUTO-LOCALIZATION DEMO...
+//
+opera.extension.i18n.ready( function( userLanguage ) {
+   opera.postError('I18N - Background: opera.extensions.i18n converted messages to lang[' + userLanguage + ']');
+
+   for(var i in opera.extension.messages) {
+      opera.postError( "I18N - Background: [" + i + "] " + opera.extension.i18n.getMessage( i ) );
+      // the above line is also equivalent to:
+      //opera.postError( "I18N - Background: [" + i + "] " + opera.extension.messages[i]["message"] );
+   }
+   
+   opera.postError('I18N - Background: To see different results, change your browser locale in Opera > Preferences > Language');
+});
+
+</script>
+
+</body>
 </html>

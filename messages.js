@@ -1,6 +1,6 @@
 opera.extension.messages = {
   "app_name": {
-    "message": "Opera to Phone Extension",
+    "message": "Opera to Phone Extension Name",
     "description": "Name of the application"
   },
   "app_name_short": {

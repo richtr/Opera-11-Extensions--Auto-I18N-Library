@@ -1,83 +1,71 @@
- OEX Auto Localization Library
- -------------------------------
- -------------------------------
+ Auto Internationalization (I18N) Library for Opera Extensions
+ -------------------------------------------------------------- 
+ --------------------------------------------------------------
  
- The auto-translation library for Opera 11+ extension developers provides a convenient
- way for developers to include multi-language support within their extensions.
+ The I18N library for Opera 11+ extension developers provides a convenient
+ way for developers to include multi-language support within their extensions without 
+ having to include those translations manually.
  
- Follow these simple instructions to setup and use this auto-localization library from
+ This library, available at opera.extensions.i18n, utilizes the Google Translate API and 
+ client-side caching for developers to quickly and easily add I18N support to their 
+ extensions.
+ 
+ This library is distributed under the Creative Commons Sharealike License: 
+ 		
+ 		http://creativecommons.org/licenses/by-sa/2.5/
+ 
+ Follow these simple instructions to config and use this library from
  your Popup and/or Injected Script files:
  
  --------------------------
- Pre-defined Localization:
+ Configuration
  --------------------------
+ 
+ 1. Add the following line to your configuration document (/config.xml):
+ 
+ 		<access origin="https://ajax.googleapis.com"/>
+ 
+ 2. Create your reference strings in /messages.js in the language of your choice.
+ 
+ Instructions for then using this library within your background process, popup process or 
+ injected script processes are included below.  
+ 
+ ---------------
+ General Usage:
+ ---------------
  
  1. Include the following lines in your Background process (typically /index.html):
  
  		<script type="text/javascript" src="messages.js"></script>
- 		<script type="text/javascript" src="translate.js"></script>
+ 		<script type="text/javascript" src="i18n_lib.js"></script>
  
- 2. Create your reference strings in /messages.js (see /messages.js for more details)
+ 2. Copy and paste the /snippet.js file once at the *top* of each Popup or Injected Script 
+    target file(s).
  
- 3. Copy and paste the /snippet.js file once in to your Popup or Injected Script target 
-    files.
+ 3. Access your localized messages by their *id* as follows within Javascript:
  
- 4. In this file, then load either ALL localized versions of your reference strings 
-    from messages.js...
- 
-  	opera.extension.i18n.loadLocale();
-  
-    ...OR, load only a sub-set of the localized versions of your reference strings 
-    using a pre-defined scope (more details in /messages.js):
-  
-  	opera.extension.i18n.loadLocale( 'popupStrings' );
-  	opera.extension.i18n.loadLocale( 'injectedStrings' );
-  
-    You can use an *optional* callback to determine when the localized messages have 
-    been returned:
-    
-     	opera.extension.i18n.loadLocale( 
-     		'popupStrings', 
-     		function(toLanguage, localizedMessages) {
-     			opera.postError('Translated messages to ' + toLanguage);
-     			// ...your initialization code here.
-     		}
-     	);
-     
-    ...OR, you could just use a callback without including a scope:
-    
-    	opera.extension.i18n.loadLocale( 
-    		function(toLanguage, localizedMessages) {
-				opera.postError('Translated messages to ' + toLanguage);
-     			// ...your initialization code here.
-    		}
-    	);
- 
- 5. Once this process has completed, access the your localized messages are available 
-    by their *id* as follows within Javascript:
- 
- 		opera.extension.i18n.messages['welcomeMessage'];
- 		opera.extension.i18n.messages['helpButtonString'];
+ 		opera.extension.i18n.getMessage['welcomeMessage'];
+ 		opera.extension.i18n.getMessage['helpButtonString'];
 		// etc...
  
  That's all you need for complete auto-localization of your extension.
  
  ------------------------
- On-demand Localization:
+ On-demand Translations:
  ------------------------
  
- In addition to localizing your pre-defined strings from messages.js, this library also 
- provides an on-demand localization/translation feature for Opera 11 extensions.
+ In addition to localizing your strings defined in your messages.js, this library can also 
+ provide on-demand localization/translation for any messages you wish.
  
  To use the on-demand localization feature, follow these instructions:
  
- 1. Once again, make sure that translate.js is included in your Background process page 
-    (typically in index.html):
+ 1. Once again, make sure that i18n_lib.js is included in your Background process page 
+    (typically in index.html).
  
- 		<script type="text/javascript" src="translate.js"></script>
+ 		<script type="text/javascript" src="i18n_lib.js"></script>
  
- 2. Copy and paste the /snippet.js file once in to your Popup or Injected Script target 
-    files.
+ 2. Copy and paste the /snippet.js file once at the *top* of each Popup or Injected Script 
+    target file(s).
  
  3. Perform on-demand translation/localization with the following code:
  
@@ -97,15 +85,21 @@
  					'message': '...etc...' 
  				}
  			},
- 			// *Mandatory* translation callback function:
+ 			// Translation callback function:
  			function( toLanguage, translatedStrings ) {
 				opera.postError('Translated messages to ' + toLanguage);
 				// Process resulting translations here...
+				// e.g. opera.extension.i18n.getMessage['mystring1'];
  			}
  		);
  
- 4. Use the callback to determine when and whether your strings could be translated to 
-    the user's locale.
+ 4. Use the callback function to obtain the strings translated to the user's locale.
+ 	
+ 	Alternatively use the standard I18N methods to obtain the translated messages:
+    
+    	opera.extension.i18n.getMessage['mystring1'];
+    	opera.extension.i18n.getMessage['somestring'];
+    	// ...etc...
     
     
 ** NOTE******************************************************************************
@@ -116,7 +110,11 @@
 **                                                                                 **
 *************************************************************************************
  
- That's it!
+--------
+Support
+--------
  
- Any problems, questions or feedback please visit: http://my.opera.com/richtr
+ Any problems, questions or feedback please visit: 
+ 
+ 		http://my.opera.com/richtr
  
