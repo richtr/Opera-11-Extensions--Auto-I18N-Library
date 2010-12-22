@@ -91,19 +91,20 @@
 	
 	// Before we analyze check if we already have the translations
 	function getCached ( messages ) {
-		var cached = [],
+		var cachedStrs = [],
 			isCached = true;
 		for( var i in messages ) {
-			var item = storage.getItem( encodeURIComponent( "autolang_" + userLanguage + "_orig_" + i ) );
-			if( item && item == messages[i]["message"] ) {
-				cached[ i ] = storage.getItem( encodeURIComponent( "autolang_" + userLanguage + "_" + i ) );
+			var origStr = storage.getItem( encodeURIComponent( "autolang_orig_" + i ) );
+			var cacheStr = storage.getItem( encodeURIComponent( "autolang_" + userLanguage + "_" + i ) );
+			if( origStr && origStr == messages[i]["message"] && cacheStr ) {
+				cachedStrs[ i ] = cacheStr;
 			} else {
 				flushCache(); // Flush the cache!
 				isCached = false;
 				break;
 			}
 		}
-		return isCached ? cached : null;
+		return isCached ? cachedStrs : null;
 	}
 	
 	function flushCache () {
@@ -118,13 +119,12 @@
 	function encodeLiterals( string ) {
 		if( string && typeof string == 'string' ) {
 			var regex = /(<([^\!]*)\!>)/;
-			/*while( string.search( regex ) ) {
-				var replacement = regex.source.replace(/\s/gm, "__");
+			while( string.search( regex ) ) {
+				if( regex.source.match( /__/ ) ) break;
+				var replacement = regex.source.replace(/\s/gm, /__/);
 				string = string.replace( regex.source , replacement );
-				opera.postError('Encoded String : ' + string);
-			}*/
+			}
 		}
-		
     	return string;
 	}
 	function decodeLiterals( string ) {
@@ -250,6 +250,7 @@
 			var l = 0;
 			for(var i in messages) { 
 				strings[l] = messages[i]["message"];
+				storage.setItem(encodeURIComponent("autolang_orig_" + i), strings[l]);
 				l++;
 			}
 
@@ -280,8 +281,6 @@
 						for(var i in messages) {
 							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), 
 									translatedStringData[ count ]);
-							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_orig_" + i), 
-									strings[ count ]);
 							messages[i]["message"] = decodeLiterals(translatedStringData[ count++ ]);
 						}
 						if( source ) {
@@ -312,6 +311,7 @@
 			var l = 0;
 			for(var i in messages) { 
 				strings[l] = messages[i]["message"];
+				storage.setItem(encodeURIComponent("autolang_orig_" + i), strings[l]);
 				l++;
 			}
 			
@@ -342,8 +342,6 @@
 						for(var i in messages) {
 							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), 
 									translatedStringData[ count ]);
-							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_orig_" + i), 
-									strings[ count ]);
 							messages[i]["message"] = decodeLiterals(translatedStringData[ count++ ]);
 						}
 						if( source ) {
@@ -412,7 +410,7 @@
 			if( !oex.messages[ id ]) return id;
 			var s = oex.messages[ id ][ "message" ];
 			if(replacements)
-				for(var i in replacements) s = s.replace('<string/>', replacements[i] );
+				for(var i in replacements) s = s.replace('<string+>', replacements[i] );
 			return s;
 		};
 		actions[ 'quickLoad' ]( {}, null, _loadedCB );

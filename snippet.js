@@ -56,7 +56,7 @@
 			if( !_m[ id ]) return id;
 			var s = _m[ id ][ "message" ];
 			if(replacements)
-				for(var i in replacements) s = s.replace('<string/>', replacements[i] );
+				for(var i in replacements) s = s.replace('<string+>', replacements[i] );
 			return s;
 		};
 		oex.messages = _m;
