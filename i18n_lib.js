@@ -16,8 +16,8 @@
  */
 !function( undefined ) {
 	
-	//var userLanguage = 'pl', // for testing
-	var userLanguage = window.navigator.language,
+	var userLanguage = 'es', // for testing
+	//var userLanguage = window.navigator.language,
 		storage = localStorage;
 	
 	if(!storage[ userLanguage ]) storage[ userLanguage ] = {};
@@ -70,7 +70,7 @@
 	        //for(var i in strings) {
 	        for ( var segments = 0;
 	                i < l && segments < 100; i += 1, segments += 1 ) {
-	            var next = encodeURIComponent( s[i] ),
+	            var next = encodeLiterals( encodeURIComponent( s[i] ) ),
 	                nextLen = next.length;
 	            // If the text is too long, abort.
 	            if ( nextLen > 4900 ) {
@@ -93,10 +93,10 @@
 	function getCached ( messages ) {
 		var cached = [],
 			isCached = true;
-		for(var i in messages) {
-			var item = storage.getItem(encodeURIComponent("autolang_" + userLanguage + "_" + i));
-			if(item) {
-				cached[i] = item;
+		for( var i in messages ) {
+			var item = storage.getItem( encodeURIComponent( "autolang_" + userLanguage + "_orig_" + i ) );
+			if( item && item == messages[i]["message"] ) {
+				cached[ i ] = storage.getItem( encodeURIComponent( "autolang_" + userLanguage + "_" + i ) );
 			} else {
 				flushCache(); // Flush the cache!
 				isCached = false;
@@ -114,6 +114,26 @@
 				storage.removeItem( key );
 		}
 	}
+	
+	function encodeLiterals( string ) {
+		if( string && typeof string == 'string' ) {
+			var regex = /(<([^\!]*)\!>)/;
+			/*while( string.search( regex ) ) {
+				var replacement = regex.source.replace(/\s/gm, "__");
+				string = string.replace( regex.source , replacement );
+				opera.postError('Encoded String : ' + string);
+			}*/
+		}
+		
+    	return string;
+	}
+	function decodeLiterals( string ) {
+		if( string && typeof string == 'string' ) {
+			string = string.replace( /<([^\!]*)\!>/gm, "$1" ); 
+			string = string.replace( /__/gm, " " ); 
+		}
+    	return string;
+    }
 	  
 	function analyze ( strings, callback ) {
         var xhr = xhrManager.get();
@@ -185,6 +205,9 @@
 	}
 	
 	function fail ( callbackOrSource, id, stringData ) {
+		for(var i in stringData) {
+			stringData[i]["message"] = decodeLiterals(stringData[i]["message"]) || '';
+		}
 		if( typeof callbackOrSource == 'function' ) {
 			callbackOrSource( userLanguage, stringData );
 		} else {
@@ -201,13 +224,17 @@
 	
 	var actions = {
 		quickLoad: function( data, source, callback ) {
+			var messages = opera.extension.messages || [];
+			for(var i in messages) {
+				messages[i]["message"] = decodeLiterals(messages[i]["message"]) || '';
+			}
 			if( source ) {
 				source.postMessage({
 					action: 'dataLocalized',
-					"data": opera.extension.messages || []
+					"data": messages
 				});
 			} else if (callback) {
-				callback( ( initialized ? userLanguage : null ), opera.extension.messages || [] );
+				callback( ( initialized ? userLanguage : null ), messages );
 			}
 		},
 		loadLocaleData: function( data, source, callback ) {
@@ -230,8 +257,10 @@
 			
 			if( cached ) {
 				for(var i in messages)
-					messages[i]["message"] = cached[i] || messages[i]["message"];
+					messages[i]["message"] = decodeLiterals(cached[i]) || 
+												decodeLiterals(messages[i]["message"]);
 				
+				opera.postError('Loaded from cache!');
 				if( source ) {
 					source.postMessage({
 						action: 'dataLocalized',
@@ -249,8 +278,11 @@
 					translate( language, strings, function( translatedStringData ) {
 						var count = 0;
 						for(var i in messages) {
-							messages[i]["message"] = translatedStringData[ count ];
-		                	storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), translatedStringData[ count++ ]);
+							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), 
+									translatedStringData[ count ]);
+							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_orig_" + i), 
+									strings[ count ]);
+							messages[i]["message"] = decodeLiterals(translatedStringData[ count++ ]);
 						}
 						if( source ) {
 							source.postMessage({
@@ -287,7 +319,8 @@
 			
 			if( cached ) {
 				for(var i in messages)
-					messages[i]["message"] = cached[i] || messages[i]["message"];
+					messages[i]["message"] = decodeLiterals(cached[i]) || 
+												decodeLiterals(messages[i]["message"]);
 				
 				if( source ) {
 					source.postMessage({
@@ -307,8 +340,11 @@
 					translate( language, strings, function( translatedStringData ) {
 						var count = 0;
 						for(var i in messages) {
-							messages[i]["message"] = translatedStringData[ count ];
-							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), translatedStringData[ count++ ]);
+							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), 
+									translatedStringData[ count ]);
+							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_orig_" + i), 
+									strings[ count ]);
+							messages[i]["message"] = decodeLiterals(translatedStringData[ count++ ]);
 						}
 						if( source ) {
 							source.postMessage({

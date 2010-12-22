@@ -28,8 +28,14 @@ and that will be localized according to their users' locales.
  		<access origin="https://ajax.googleapis.com"/>
  
  2. Create your reference strings in /messages.js in the language of your choice. You can add 
-    placeholders as <string/> in to which you can dynamically inject content at runtime as 
-    required (see examples below).
+    placeholders as <string+> in to which you can dynamically inject content at runtime as 
+    required. 
+    
+    You may also use <your text!> to indicate that you would not like 'your text' to be 
+    translated in a given message. At run time, any <...!> syntax will be removed and replaced 
+    with the inner text included.
+    
+    See the included /messages.js file for format and examples.
  
  Instructions for then using this library within your background process, popup process or 
  injected script processes are included below.  
@@ -52,7 +58,7 @@ and that will be localized according to their users' locales.
  		opera.extension.i18n.getMessage('helpButtonString');
 		// etc...
 		
-	You can also replace <string/> placeholders in your messages at runtime as follows:
+	You can also replace <+string> placeholders in your messages at runtime as follows:
 	
     	opera.extension.i18n.getMessage('somemessage', [ "string1", "string2" ]);
     	opera.extension.i18n.getMessage('sign_in_required_message', [ 
@@ -114,7 +120,7 @@ and that will be localized according to their users' locales.
     	opera.extension.i18n.getMessage('somestring');
     	// ...etc...
     	
-    You can also replace <string/> placeholders in your messages at runtime as follows:
+    You can also replace <+string> placeholders in your messages at runtime as follows:
 	
     	opera.extension.i18n.getMessage('somemessage', [ "string1", "string2" ]);
     	opera.extension.i18n.getMessage('sign_in_required_message', [ 
