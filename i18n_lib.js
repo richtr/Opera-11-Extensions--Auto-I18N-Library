@@ -239,7 +239,8 @@
 				if( source ) {
 					source.postMessage({
 						action: 'dataLocalized',
-						"data": messages
+						"data": messages,
+						"language": (initialized ? userLanguage : null)
 					});
 				} else if (callback) {
 					callback( ( initialized ? userLanguage : null ), messages );
