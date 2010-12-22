@@ -120,7 +120,7 @@
 
 	function encodeLiterals( string ) {
 		if( string && typeof string == 'string' ) {
-			var regex = /(<[^\!]*\!>)/m,
+			var regex = /(<[^\!\+>]*\!>)/m,
 				pos = -1;
 			while( string.test( regex ) !== -1 && string.test( regex ) > pos ) {
 				var replacement = regex.source.replace(/\s[^\s]/gm, /__/);
@@ -132,7 +132,7 @@
 	}
 	function decodeLiterals( string ) {
 		if( string && typeof string == 'string' ) {
-			var regex = /<([^\!]*)\!>/gm,
+			var regex = /<([^\!\+>]*)\!>/gm,
 			string = string.replace( regex, "$1" ); 
 			string = string.replace( /__/gm, /\s/ ); 
 		}
@@ -154,7 +154,11 @@
 			}
 			xhrManager.release( xhr );
 		};
-		xhr.send();		
+		try {
+			xhr.send();
+		} catch(e) {
+			callback( );
+		}
 	}
 
 	function translate ( fromLanguage, strings, callback ) {
