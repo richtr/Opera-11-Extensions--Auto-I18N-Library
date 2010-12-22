@@ -1,20 +1,18 @@
  Auto Internationalization (I18N) Library for Opera Extensions
  -------------------------------------------------------------- 
- --------------------------------------------------------------
+ Written by Rich Tibbett.
+ Distributed under the Creative Commons Sharealike License:
+   http://creativecommons.org/licenses/by-sa/2.5/
  
-The Auto I18N library for Opera 11+ extensions provides a convenient way for developers to 
-include multi-language support within their extensions without having to include those 
-translations manually.
+ The Auto I18N library for Opera 11+ extensions provides a convenient way for developers to 
+ include multi-language support within their extensions without having to include those 
+ translations manually.
  
-This library creates an API at opera.extensions.i18n for developers to quickly and easily 
-add internationalization and localization support to their extensions.
+ This library creates an API at opera.extensions.i18n for developers to quickly and easily 
+ add internationalization and localization support to their extensions.
 
-A developer simply need write a single message.js file, in the language of their choice, 
-and that will be localized according to their users' locales.
- 
- This library is distributed under the Creative Commons Sharealike License: 
- 		
- 		http://creativecommons.org/licenses/by-sa/2.5/
+ A developer simply need write a single message.js file, in the language of their choice, 
+ and that will be localized according to their users' locales.
  
  Follow these simple instructions to configure and use this library from
  your Background, Popup and/or Injected Script processes:

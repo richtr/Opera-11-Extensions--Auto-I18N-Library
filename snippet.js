@@ -2,8 +2,8 @@
  * OEX Auto Localization Snippet
  * -------------------------------
  * Written by Rich Tibbett.
- * Distributed under the Creative Commons Sharealike License 
- * http://creativecommons.org/licenses/by-sa/2.5/
+ * Distributed under the Creative Commons Sharealike License:
+ *   http://creativecommons.org/licenses/by-sa/2.5/
  * 
  * The auto-translation library for Opera 11+ extension developers provides a convenient
  * way for developers to include multi-language support within their extensions.

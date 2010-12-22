@@ -1,7 +1,9 @@
 /**
  * Auto-Translate Library for Opera 11 Extensions.
  * ------------------------------------------------
- * ------------------------------------------------
+ * Written by Rich Tibbett.
+ * Distributed under the Creative Commons Sharealike License:
+ *   http://creativecommons.org/licenses/by-sa/2.5/
  * 
  * This library will take all input strings from messages.js and convert your extension 
  * in to the user's current language via the Google Translate API.
@@ -15,80 +17,80 @@
  * 
  */
 !function( undefined ) {
-	
+
 	var userLanguage = 'es', // for testing
 	//var userLanguage = window.navigator.language,
 		storage = localStorage;
-	
+
 	if(!storage[ userLanguage ]) storage[ userLanguage ] = {};
 
 	var xhrManager = ( function() {
-	    var pool = [];
-	    return {
-	        get: function () {
-	            return pool.pop() || new XMLHttpRequest();
-	        },
-	        release: function( xhr ) {
-	            xhr.onreadystatechange = function () {};
-	            pool.push( xhr );
-	        }
-	    };
+		var pool = [];
+		return {
+			get: function () {
+				return pool.pop() || new XMLHttpRequest();
+			},
+			release: function( xhr ) {
+				xhr.onreadystatechange = function () {};
+				pool.push( xhr );
+			}
+		};
 	}() );
-	
-	function getAnalysisUrl ( strings ) {
-	    var url = 'https://ajax.googleapis.com/ajax/services/language/detect?v=1.0&q='
-	    	text = '';
-	    
-	    for(var i in strings) {
-	    	if(text !== '') text += ' ';
-	    	text += strings[i];
-	    }
-	    text = encodeURIComponent( text );
-	    if ( text.length > 1300 ) {
-	    	text = text.slice( 0, text.lastIndexOf( '%', 1300 ) );
-	    }
-	    url += text;
-	    return url;
-	}
-	
-	function getTranslatePackets ( fromLanguage, strings ) {
-	    var packets = [],
-	        i = 0,
-	        s = [],
-	        l = 0;
-	    
-	    for(var x in strings) {
-	    	s[l] = strings[x];
-	    	l++;
-	    }
-	    
-	    while ( i < l ) {
-	    	// Set destination language
-	        var packet = 'v=1.0&langpair=' + fromLanguage + '%7C' + userLanguage;
-	        var len = packet.length;
 
-	        //for(var i in strings) {
-	        for ( var segments = 0;
-	                i < l && segments < 100; i += 1, segments += 1 ) {
-	            var next = encodeLiterals( encodeURIComponent( s[i] ) ),
-	                nextLen = next.length;
-	            // If the text is too long, abort.
-	            if ( nextLen > 4900 ) {
-	                return [];
-	            }
-	            // Google Translate requests have a 5000 character limit.
-	            if ( len + nextLen > 4900 ) {
-	                break;
-	            }
-	            packet += '&q=';
-	            packet += next;
-	            len += nextLen;
-	        }
-	        packets.push( packet );
-	    }
-	    return packets;
+	function getAnalysisUrl ( strings ) {
+		var url = 'https://ajax.googleapis.com/ajax/services/language/detect?v=1.0&q=',
+			text = '';
+
+		for(var i in strings) {
+			if(text !== '') text += ' ';
+			text += strings[i];
+		}
+		text = encodeURIComponent( text );
+		if ( text.length > 1300 ) {
+			text = text.slice( 0, text.lastIndexOf( '%', 1300 ) );
+		}
+		url += text;
+		return url;
 	}
-	
+
+	function getTranslatePackets ( fromLanguage, strings ) {
+		var packets = [],
+			i = 0,
+			s = [],
+			l = 0;
+
+		for(var x in strings) {
+			s[l] = strings[x];
+			l++;
+		}
+
+		while ( i < l ) {
+			// Set destination language
+			var packet = 'v=1.0&langpair=' + fromLanguage + '%7C' + userLanguage,
+				len = packet.length;
+
+			//for(var i in strings) {
+			for ( var segments = 0;
+			i < l && segments < 100; i += 1, segments += 1 ) {
+				var next = encodeLiterals( encodeURIComponent( s[i] ) ),
+				nextLen = next.length;
+				// If the text is too long, abort.
+				if ( nextLen > 4900 ) {
+					return [];
+				}
+				// Google Translate requests have a 5000 character limit.
+				if ( len + nextLen > 4900 ) {
+					break;
+				}
+				packet += '&q=';
+				packet += next;
+				len += nextLen;
+			}
+			packets.push( packet );
+		}
+		return packets;
+	}
+
 	// Before we analyze check if we already have the translations
 	function getCached ( messages ) {
 		var cachedStrs = [],
@@ -106,7 +108,7 @@
 		}
 		return isCached ? cachedStrs : null;
 	}
-	
+
 	function flushCache () {
 		// Only remove autolang_ storage attributes
 		for(var j = 0, l = storage.length; j < l; j++) {
@@ -115,95 +117,97 @@
 				storage.removeItem( key );
 		}
 	}
-	
+
 	function encodeLiterals( string ) {
 		if( string && typeof string == 'string' ) {
-			var regex = /(<([^\!]*)\!>)/;
-			while( string.search( regex ) ) {
-				if( regex.source.match( /__/ ) ) break;
-				var replacement = regex.source.replace(/\s/gm, /__/);
+			var regex = /(<[^\!]*\!>)/m,
+				pos = -1;
+			while( string.test( regex ) !== -1 && string.test( regex ) > pos ) {
+				var replacement = regex.source.replace(/\s[^\s]/gm, /__/);
 				string = string.replace( regex.source , replacement );
+				pos = string.indexOf( replacement );
 			}
 		}
-    	return string;
+		return string;
 	}
 	function decodeLiterals( string ) {
 		if( string && typeof string == 'string' ) {
-			string = string.replace( /<([^\!]*)\!>/gm, "$1" ); 
-			string = string.replace( /__/gm, " " ); 
+			var regex = /<([^\!]*)\!>/gm,
+			string = string.replace( regex, "$1" ); 
+			string = string.replace( /__/gm, /\s/ ); 
 		}
-    	return string;
-    }
-	  
-	function analyze ( strings, callback ) {
-        var xhr = xhrManager.get();
-        xhr.open( 'GET', getAnalysisUrl( strings ), true );
-        xhr.onreadystatechange = function () {
-            if ( xhr.readyState < 4 ) return;
-            var result = JSON.parse( xhr.responseText ),
-                data = result.responseData;
-            if ( ( xhr.status >= 200 && xhr.status < 300 ) &&
-                    ( result.responseStatus === 200 ) ) {
-                callback( data.language );
-            } else {
-            	callback( ); // no parameter indicates an error
-            }
-            xhrManager.release( xhr );
-        };
-        xhr.send();		
+		return string;
 	}
-	
+
+	function analyze ( strings, callback ) {
+		var xhr = xhrManager.get();
+		xhr.open( 'GET', getAnalysisUrl( strings ), true );
+		xhr.onreadystatechange = function () {
+			if ( xhr.readyState < 4 ) return;
+			var result = JSON.parse( xhr.responseText ),
+			data = result.responseData;
+			if ( ( xhr.status >= 200 && xhr.status < 300 ) &&
+					( result.responseStatus === 200 ) ) {
+				callback( data.language );
+			} else {
+				callback( ); // no parameter indicates an error
+			}
+			xhrManager.release( xhr );
+		};
+		xhr.send();		
+	}
+
 	function translate ( fromLanguage, strings, callback ) {
 		if( fromLanguage === userLanguage ) {
 			callback( strings );
 			return;
 		}
-		
-        var xhr = xhrManager.get(),
-	        packets = getTranslatePackets( fromLanguage, strings ),
-	        l = packets.length,
-	        i = 0,
-	        translatedStringData = [];
-	
-	    function send () {
-	        xhr.open( 'POST', 'https://ajax.googleapis.com/ajax/services/language/translate',
-	        		true );
-	        xhr.setRequestHeader( 'Content-type', 
-	            'application/x-www-form-urlencoded' );
-	        xhr.send( packets[i] );
-	    }
-	    
-	    xhr.onreadystatechange = function () {
-	        if ( xhr.readyState < 4 ) return;
-	        var result = JSON.parse( xhr.responseText ),
-	            data = result.responseData;
-	            
-	        if ( ( xhr.status >= 200 && xhr.status < 300 ) &&
-	                result.responseStatus === 200 ) {
-	            if ( !( data instanceof Array ) ) {
-	                data = [ data ];
-	            }
-	            Array.prototype.push.apply( translatedStringData, data.map(
-	                      function( item ) {
-	                          return item.responseStatus === 200 ? 
-	                              item.responseData.translatedText : null;
-	                      }
-	            ) );
-	            i += 1;
-	            if ( i < l ) {
-	                send();
-	            } else {
-	                callback( translatedStringData );
-	                xhrManager.release( xhr );
-	            }
-	        } else {
-	        	callback( strings );
-	            xhrManager.release( xhr );
-	        }
-	    };
-	    send();
+
+		var xhr = xhrManager.get(),
+			packets = getTranslatePackets( fromLanguage, strings ),
+			l = packets.length,
+			i = 0,
+			translatedStringData = [];
+
+		function send () {
+			xhr.open( 'POST', 'https://ajax.googleapis.com/ajax/services/language/translate',
+					true );
+			xhr.setRequestHeader( 'Content-type', 
+			'application/x-www-form-urlencoded' );
+			xhr.send( packets[i] );
+		}
+
+		xhr.onreadystatechange = function () {
+			if ( xhr.readyState < 4 ) return;
+			var result = JSON.parse( xhr.responseText ),
+			data = result.responseData;
+
+			if ( ( xhr.status >= 200 && xhr.status < 300 ) &&
+					result.responseStatus === 200 ) {
+				if ( !( data instanceof Array ) ) {
+					data = [ data ];
+				}
+				Array.prototype.push.apply( translatedStringData, data.map(
+						function( item ) {
+							return item.responseStatus === 200 ? 
+									item.responseData.translatedText : null;
+						}
+				) );
+				i += 1;
+				if ( i < l ) {
+					send();
+				} else {
+					callback( translatedStringData );
+					xhrManager.release( xhr );
+				}
+			} else {
+				callback( strings );
+				xhrManager.release( xhr );
+			}
+		};
+		send();
 	}
-	
+
 	function fail ( callbackOrSource, id, stringData ) {
 		for(var i in stringData) {
 			stringData[i]["message"] = decodeLiterals(stringData[i]["message"]) || '';
@@ -219,160 +223,160 @@
 			});
 		}
 	}
-	
-	var initialized = false;
-	
-	var actions = {
-		quickLoad: function( data, source, callback ) {
-			var messages = opera.extension.messages || [];
-			for(var i in messages) {
-				messages[i]["message"] = decodeLiterals(messages[i]["message"]) || '';
-			}
-			if( source ) {
-				source.postMessage({
-					action: 'dataLocalized',
-					"data": messages
-				});
-			} else if (callback) {
-				callback( ( initialized ? userLanguage : null ), messages );
-			}
-		},
-		loadLocaleData: function( data, source, callback ) {
-			var id = data.id,
-				messages = opera.extension.messages || [],
-				strings = [];
-			
-			if( messages.length <= 0 ) {
-				fail( source || callback, id, [] );
-				return;
-			}
-			
-			var l = 0;
-			for(var i in messages) { 
-				strings[l] = messages[i]["message"];
-				storage.setItem(encodeURIComponent("autolang_orig_" + i), strings[l]);
-				l++;
-			}
 
-			var cached = getCached( messages );
-			
-			if( cached ) {
-				for(var i in messages)
-					messages[i]["message"] = decodeLiterals(cached[i]) || 
-												decodeLiterals(messages[i]["message"]);
-				
-				opera.postError('Loaded from cache!');
+	var initialized = false;
+
+	var actions = {
+			quickLoad: function( data, source, callback ) {
+				var messages = opera.extension.messages || [];
+				for(var i in messages) {
+					messages[i]["message"] = decodeLiterals(messages[i]["message"]) || '';
+				}
 				if( source ) {
 					source.postMessage({
 						action: 'dataLocalized',
-						"language": userLanguage,
 						"data": messages
 					});
 				} else if (callback) {
-					callback( userLanguage, messages );
+					callback( ( initialized ? userLanguage : null ), messages );
 				}
-				return;
-			}
-			
-			analyze( strings, function( language ) {
-				if( language ) {
-					translate( language, strings, function( translatedStringData ) {
-						var count = 0;
-						for(var i in messages) {
-							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), 
-									translatedStringData[ count ]);
-							messages[i]["message"] = decodeLiterals(translatedStringData[ count++ ]);
-						}
-						if( source ) {
-							source.postMessage({
-								action: 'dataLocalized',
-								"language": language,
-								"data": messages
-							});
-						} else if (callback) {
-							callback( language, messages );
-						}
-					});
-				} else {
-					fail( source || callback, id, messages );
+			},
+			loadLocaleData: function( data, source, callback ) {
+				var id = data.id,
+					messages = opera.extension.messages || [],
+					strings = [];
+
+				if( messages.length <= 0 ) {
+					fail( source || callback, id, [] );
+					return;
 				}
-			});
-		},
-		localizeData: function( data, source, callback ) {
-			var id = data.id,
+
+				var l = 0;
+				for(var i in messages) { 
+					strings[l] = messages[i]["message"];
+					storage.setItem(encodeURIComponent("autolang_orig_" + i), strings[l]);
+					l++;
+				}
+
+				var cached = getCached( messages );
+
+				if( cached ) {
+					for(var i in messages)
+						messages[i]["message"] = decodeLiterals(cached[i]) || 
+						decodeLiterals(messages[i]["message"]);
+
+					opera.postError('Loaded from cache!');
+					if( source ) {
+						source.postMessage({
+							action: 'dataLocalized',
+							"language": userLanguage,
+							"data": messages
+						});
+					} else if (callback) {
+						callback( userLanguage, messages );
+					}
+					return;
+				}
+
+				analyze( strings, function( language ) {
+					if( language ) {
+						translate( language, strings, function( translatedStringData ) {
+							var count = 0;
+							for(var i in messages) {
+								storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), 
+										translatedStringData[ count ]);
+								messages[i]["message"] = decodeLiterals(translatedStringData[ count++ ]);
+							}
+							if( source ) {
+								source.postMessage({
+									action: 'dataLocalized',
+									"language": language,
+									"data": messages
+								});
+							} else if (callback) {
+								callback( language, messages );
+							}
+						});
+					} else {
+						fail( source || callback, id, messages );
+					}
+				});
+			},
+			localizeData: function( data, source, callback ) {
+				var id = data.id,
 				messages = data.messages || null,
 				strings = [];
-			
-			if( !messages ) {
-				fail( source || callback, id, {} );
-				return;
-			}
-			
-			var l = 0;
-			for(var i in messages) { 
-				strings[l] = messages[i]["message"];
-				storage.setItem(encodeURIComponent("autolang_orig_" + i), strings[l]);
-				l++;
-			}
-			
-			var cached = getCached( messages );
-			
-			if( cached ) {
-				for(var i in messages)
-					messages[i]["message"] = decodeLiterals(cached[i]) || 
-												decodeLiterals(messages[i]["message"]);
-				
-				if( source ) {
-					source.postMessage({
-						action: 'dataLocalized',
-						"id": id || null,
-						"language": userLanguage,
-						"data": messages
-					});
-				} else if (callback) {
-					callback( userLanguage, messages );
+
+				if( !messages ) {
+					fail( source || callback, id, {} );
+					return;
 				}
-				return;
-			}
-			
-			analyze( strings, function( language ) {
-				if( language ) {
-					translate( language, strings, function( translatedStringData ) {
-						var count = 0;
-						for(var i in messages) {
-							storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), 
-									translatedStringData[ count ]);
-							messages[i]["message"] = decodeLiterals(translatedStringData[ count++ ]);
-						}
-						if( source ) {
-							source.postMessage({
-								action: 'dataLocalized',
-								"id": id || null,
-								"language": language,
-								"data": messages
-							});
-						} else if (callback) {
-							callback( language, messages );
-						}
-					});
-				} else {
-					fail( source || callback, id, messages );
+
+				var l = 0;
+				for(var i in messages) { 
+					strings[l] = messages[i]["message"];
+					storage.setItem(encodeURIComponent("autolang_orig_" + i), strings[l]);
+					l++;
 				}
-			});
-		}
+
+				var cached = getCached( messages );
+
+				if( cached ) {
+					for(var i in messages)
+						messages[i]["message"] = decodeLiterals(cached[i]) || 
+						decodeLiterals(messages[i]["message"]);
+
+					if( source ) {
+						source.postMessage({
+							action: 'dataLocalized',
+							"id": id || null,
+							"language": userLanguage,
+							"data": messages
+						});
+					} else if (callback) {
+						callback( userLanguage, messages );
+					}
+					return;
+				}
+
+				analyze( strings, function( language ) {
+					if( language ) {
+						translate( language, strings, function( translatedStringData ) {
+							var count = 0;
+							for(var i in messages) {
+								storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), 
+										translatedStringData[ count ]);
+								messages[i]["message"] = decodeLiterals(translatedStringData[ count++ ]);
+							}
+							if( source ) {
+								source.postMessage({
+									action: 'dataLocalized',
+									"id": id || null,
+									"language": language,
+									"data": messages
+								});
+							} else if (callback) {
+								callback( language, messages );
+							}
+						});
+					} else {
+						fail( source || callback, id, messages );
+					}
+				});
+			}
 	};
-	
+
 	opera.extension.addEventListener( 'message', function( msg ) {
 		if( msg.data.action !== 'quickLoad' && 
 				msg.data.action !== 'localizeData' && 
-					msg.data.action !== 'loadLocaleData' )
+				msg.data.action !== 'loadLocaleData' )
 			return;
 		actions[ msg.data.action ]( msg.data, msg.source );
 	}, false);
 
-	
-// Load the i18n library and provide the API @ opera.extension.i18n
-	
+
+//	Load the i18n library and provide the API @ opera.extension.i18n
+
 	var oex = opera.extension;
 	var i18nObj = function() {
 		var lang = 'en',
@@ -421,5 +425,5 @@
 		};
 	};
 	if(!oex.i18n) oex.i18n = new i18nObj();
-	
+
 }();
