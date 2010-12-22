@@ -20,7 +20,8 @@
 
 	var userLanguage = 'es', // for testing
 	//var userLanguage = window.navigator.language,
-		storage = localStorage;
+		storage = localStorage,
+		initialized = false;
 
 	if(!storage[ userLanguage ]) storage[ userLanguage ] = {};
 
@@ -157,7 +158,7 @@
 		try {
 			xhr.send();
 		} catch(e) {
-			callback( );
+			callback( ); // offline
 		}
 	}
 
@@ -227,8 +228,6 @@
 			});
 		}
 	}
-
-	var initialized = false;
 
 	var actions = {
 			quickLoad: function( data, source, callback ) {
