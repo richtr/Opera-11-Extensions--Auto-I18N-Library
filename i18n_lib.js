@@ -18,8 +18,8 @@
  */
 !function( undefined ) {
 
-	var userLanguage = 'es', // for testing
-	//var userLanguage = window.navigator.language,
+	//var userLanguage = 'es', // for testing
+	var userLanguage = window.navigator.language,
 		storage = localStorage,
 		initialized = false;
 
