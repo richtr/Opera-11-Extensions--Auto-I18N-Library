@@ -78,7 +78,7 @@
  French, you may include this in your extension within a /locales/fr/ directory.
 
  Your extension will use any pre-defined locales files over any auto-translation capabilities 
- provide by this library.
+ provided by this library.
 
  For full details of the W3C Widgets I18N Model used in Opera extensions please consult the 
  spec at: 
