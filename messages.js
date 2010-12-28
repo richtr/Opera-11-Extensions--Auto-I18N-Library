@@ -21,12 +21,12 @@ opera.extension.messages = {
     "scope": "injectedMessages"
   },
   "error_sending_message": {
-    "message": "Error sending to phone: <string+>",
-    "description": "Notice when link cannot be sent. <string+> is automatically replaced with the error text."
+    "message": "Error sending to phone: <string/>",
+    "description": "Notice when link cannot be sent. <string/> is automatically replaced with the error text."
   },
   "sign_in_required_message": {
-    "message": "Please <string+> to <Opera to Phone!>.",
-    "description": "Notice when sign in is required. <string+> is replaced with 'sign in'."
+    "message": "Please <string/> to <Opera to Phone!>.",
+    "description": "Notice when sign in is required. <string/> is replaced with 'sign in'."
   },
   "sign_in_message": {
     "message": "sign in",

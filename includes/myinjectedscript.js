@@ -24,7 +24,7 @@
 		function _om ( msg ) {
 			var d = msg.data, 
 				s = [];
-			if(!d || d.action!=='dataLocalized') return;
+			if(!d || d.action!=='i18n_localized') return;
 			for(var j in d.data) s[j] = _m[j] = d.data[j];
 			if(d.id) localizeTransactions[ d.id ]( d.language, s );
 			if(!initialized) {
@@ -44,7 +44,7 @@
 			var id = Math.floor(Math.random()*1e16),
 				cb = (callback && typeof callback == 'function') ? callback : function() {};
 			localizeTransactions[ id ] = cb;
-			oex.postMessage({ "action": 'localizeData', "id": id, "messages": stringData });
+			oex.postMessage({ "action": 'i18n_localize', "id": id, "messages": stringData });
 		};
 		var _r = function( callback ) {
 			var cb = (callback && typeof callback == 'function') ? callback : function() {};
@@ -54,16 +54,16 @@
 			if( !_m[ id ]) return id;
 			var s = _m[ id ][ "message" ];
 			if(replacements)
-				for(var i in replacements) s = s.replace('<string+>', replacements[i] );
+				for(var i in replacements) s = s.replace('<string/>', replacements[i] );
 			return s;
 		};
 		oex.messages = _m;
 		oex.addEventListener('message', _om, false);
-		oex.postMessage({ "action": 'quickLoad' }); 
+		oex.postMessage({ "action": 'i18n_load' }); 
 		return {
 			get ready() { return _r; }, 	 // parameters: (callback_function)
 			get localize() { return _l; },   // parameters: (strings, callback_function)
-			get getMessage() { return _gm; } // parameters: (message_id)
+			get getMessage() { return _gm; } // parameters: (message_id[, replacements])
 		};
 	};
 	if(!oex.i18n) oex.i18n = new i18nObj();

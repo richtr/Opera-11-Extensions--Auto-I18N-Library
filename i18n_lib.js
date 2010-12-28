@@ -18,12 +18,27 @@
  */
 !function( undefined ) {
 
-	//var userLanguage = 'es', // for testing
+//	var userLanguage = 'pl', // for testing
 	var userLanguage = window.navigator.language,
-		storage = localStorage,
-		initialized = false;
+		oex = opera.extension,
+	    storage = localStorage,
+        initialized = false,
+	    origMessages = cloneObj( oex.messages ) || [],
+	    sanitizedMessages = oex.messages || [];
+	
+	for( var i in sanitizedMessages ) {
+		sanitizedMessages[i]["message"] = decodeLiterals( sanitizedMessages[i]["message"] ) || '';
+	}
 
 	if(!storage[ userLanguage ]) storage[ userLanguage ] = {};
+
+	function cloneObj(o) {
+     		if(typeof(o) != 'object') return o;
+     		if(o == null) return o;
+     		var newO = new Object();
+     		for(var i in o) newO[i] = cloneObj(o[i]);
+      		return newO;
+	}
 
 	var xhrManager = ( function() {
 		var pool = [];
@@ -73,7 +88,7 @@
 			//for(var i in strings) {
 			for ( var segments = 0;
 			i < l && segments < 100; i += 1, segments += 1 ) {
-				var next = encodeLiterals( encodeURIComponent( s[i] ) ),
+				var next = encodeLiterals( s[i] ),
 				nextLen = next.length;
 				// If the text is too long, abort.
 				if ( nextLen > 4900 ) {
@@ -121,21 +136,22 @@
 
 	function encodeLiterals( string ) {
 		if( string && typeof string == 'string' ) {
-			var regex = /(<[^\!\+>]*\!>)/m,
-				pos = -1;
-			while( string.test( regex ) !== -1 && string.test( regex ) > pos ) {
-				var replacement = regex.source.replace(/\s[^\s]/gm, /__/);
-				string = string.replace( regex.source , replacement );
-				pos = string.indexOf( replacement );
+			var regex = /(<[^\!\+>]*\!>)/gm;
+			var matches = string.match( regex );
+			if( matches ) {
+				for(var i in matches) {
+					var replacement = matches[ i ].replace( / /gm, "__" );
+					string = string.replace( matches[ i ], replacement );
+				}
 			}
 		}
-		return string;
+		return encodeURIComponent( string );
 	}
 	function decodeLiterals( string ) {
 		if( string && typeof string == 'string' ) {
 			var regex = /<([^\!\+>]*)\!>/gm,
 			string = string.replace( regex, "$1" ); 
-			string = string.replace( /__/gm, /\s/ ); 
+			string = string.replace( /__/gm, " " ); 
 		}
 		return string;
 	}
@@ -212,6 +228,51 @@
 		};
 		send();
 	}
+	
+	function loadLocaleData ( callback ) {
+		var strings = [],
+			l = 0;
+		
+		if( origMessages.length <= 0 ) {
+			fail( callback, null, [] );
+			return;
+		}
+	
+		for(var i in origMessages) { 
+			strings[l] = origMessages[i]["message"];
+			storage.setItem(encodeURIComponent("autolang_orig_" + i), strings[l]);
+			l++;
+		}
+	
+		var cached = getCached( origMessages );
+	
+		if( cached ) {
+			for(var i in origMessages) {
+				sanitizedMessages[i]["message"] = decodeLiterals(
+						cached[i]) || decodeLiterals(sanitizedMessages[i]["message"] 
+				);
+			}
+			opera.postError('Loaded from cache!');
+			callback( userLanguage, sanitizedMessages );
+			return;
+		}
+	
+		analyze( strings, function( language ) {
+			if( language ) {
+				translate( language, strings, function( translatedStringData ) {
+					var count = 0;
+					for(var i in origMessages) {
+						storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), 
+								translatedStringData[ count ]);
+						sanitizedMessages[i]["message"] = decodeLiterals( translatedStringData[ count++ ] );
+					}
+					callback( language, sanitizedMessages );
+				});
+			} else {
+				fail( callback, null, sanitizedMessages );
+			}
+		});
+	}
 
 	function fail ( callbackOrSource, id, stringData ) {
 		for(var i in stringData) {
@@ -221,7 +282,7 @@
 			callbackOrSource( userLanguage, stringData );
 		} else {
 			callbackOrSource.postMessage({
-				action: 'dataLocalized',
+				action: 'i18n_localized',
 				"id": id || null,
 				"language": userLanguage,
 				"data": stringData
@@ -230,83 +291,18 @@
 	}
 
 	var actions = {
-			quickLoad: function( data, source, callback ) {
-				var messages = opera.extension.messages || [];
-				for(var i in messages) {
-					messages[i]["message"] = decodeLiterals(messages[i]["message"]) || '';
-				}
+			i18n_load: function( data, source, callback ) {
 				if( source ) {
 					source.postMessage({
-						action: 'dataLocalized',
-						"data": messages,
+						action: 'i18n_localized',
+						"data": sanitizedMessages,
 						"language": (initialized ? userLanguage : null)
 					});
-				} else if (callback) {
-					callback( ( initialized ? userLanguage : null ), messages );
+				} else if ( callback ) {
+					callback( ( initialized ? userLanguage : null ), sanitizedMessages );
 				}
 			},
-			loadLocaleData: function( data, source, callback ) {
-				var id = data.id,
-					messages = opera.extension.messages || [],
-					strings = [];
-
-				if( messages.length <= 0 ) {
-					fail( source || callback, id, [] );
-					return;
-				}
-
-				var l = 0;
-				for(var i in messages) { 
-					strings[l] = messages[i]["message"];
-					storage.setItem(encodeURIComponent("autolang_orig_" + i), strings[l]);
-					l++;
-				}
-
-				var cached = getCached( messages );
-
-				if( cached ) {
-					for(var i in messages)
-						messages[i]["message"] = decodeLiterals(cached[i]) || 
-						decodeLiterals(messages[i]["message"]);
-
-					opera.postError('Loaded from cache!');
-					if( source ) {
-						source.postMessage({
-							action: 'dataLocalized',
-							"language": userLanguage,
-							"data": messages
-						});
-					} else if (callback) {
-						callback( userLanguage, messages );
-					}
-					return;
-				}
-
-				analyze( strings, function( language ) {
-					if( language ) {
-						translate( language, strings, function( translatedStringData ) {
-							var count = 0;
-							for(var i in messages) {
-								storage.setItem(encodeURIComponent("autolang_" + userLanguage + "_" + i), 
-										translatedStringData[ count ]);
-								messages[i]["message"] = decodeLiterals(translatedStringData[ count++ ]);
-							}
-							if( source ) {
-								source.postMessage({
-									action: 'dataLocalized',
-									"language": language,
-									"data": messages
-								});
-							} else if (callback) {
-								callback( language, messages );
-							}
-						});
-					} else {
-						fail( source || callback, id, messages );
-					}
-				});
-			},
-			localizeData: function( data, source, callback ) {
+			i18n_localize: function( data, source, callback ) {
 				var id = data.id,
 				messages = data.messages || null,
 				strings = [];
@@ -332,7 +328,7 @@
 
 					if( source ) {
 						source.postMessage({
-							action: 'dataLocalized',
+							action: 'i18n_localized',
 							"id": id || null,
 							"language": userLanguage,
 							"data": messages
@@ -354,7 +350,7 @@
 							}
 							if( source ) {
 								source.postMessage({
-									action: 'dataLocalized',
+									action: 'i18n_localized',
 									"id": id || null,
 									"language": language,
 									"data": messages
@@ -370,10 +366,9 @@
 			}
 	};
 
-	opera.extension.addEventListener( 'message', function( msg ) {
-		if( msg.data.action !== 'quickLoad' && 
-				msg.data.action !== 'localizeData' && 
-				msg.data.action !== 'loadLocaleData' )
+	oex.addEventListener( 'message', function( msg ) {
+		if( msg.data.action !== 'i18n_load' && 
+				msg.data.action !== 'i18n_localize' )
 			return;
 		actions[ msg.data.action ]( msg.data, msg.source );
 	}, false);
@@ -381,7 +376,6 @@
 
 //	Load the i18n library and provide the API @ opera.extension.i18n
 
-	var oex = opera.extension;
 	var i18nObj = function() {
 		var lang = 'en',
 			readyTransactions = [];
@@ -399,7 +393,7 @@
 						readyTransactions = readyTransactions.splice(i, 1);
 					}
 				} else {
-					actions[ 'loadLocaleData' ]( {}, null, _loadedCB );
+					loadLocaleData( _loadedCB );
 				}
 			}
 		}
@@ -408,7 +402,7 @@
 				if( callback && typeof callback == 'function' )	callback( lang, stringData );
 				return; 
 			}
-			actions[ 'localizeData' ]({ "messages": stringData }, null, cb);
+			actions[ 'i18n_localize' ]({ "messages": stringData }, null, cb);
 		};
 		var _r = function( callback ) {
 			var cb = (callback && typeof callback == 'function') ? callback : function() {};
@@ -418,14 +412,14 @@
 			if( !oex.messages[ id ]) return id;
 			var s = oex.messages[ id ][ "message" ];
 			if(replacements)
-				for(var i in replacements) s = s.replace('<string+>', replacements[i] );
+				for(var i in replacements) s = s.replace('<string/>', replacements[i] );
 			return s;
 		};
-		actions[ 'quickLoad' ]( {}, null, _loadedCB );
+		actions[ 'i18n_load' ]( {}, null, _loadedCB );
 		return {
 			get ready() { return _r; }, 	 // parameters: (callback_function)
 			get localize() { return _l; },   // parameters: (strings, callback_function)
-			get getMessage() { return _gm; } // parameters: (message_id)
+			get getMessage() { return _gm; } // parameters: (message_id[, replacements])
 		};
 	};
 	if(!oex.i18n) oex.i18n = new i18nObj();
