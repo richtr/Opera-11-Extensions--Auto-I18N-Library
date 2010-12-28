@@ -11,7 +11,7 @@
  This library creates an API at opera.extensions.i18n for developers to quickly and easily 
  add internationalization and localization support to their extensions.
 
- A developer simply need write a single message.js file, in the language of their choice, 
+ A developer simply need write a single messages.js file, in the language of their choice, 
  and that will be localized according to their users' locales.
  
  Follow these simple instructions to configure and use this library from
